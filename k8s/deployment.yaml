@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bestverifybot
+  labels:
+    app: bestverifybot
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: bestverifybot
+  template:
+    metadata:
+      labels:
+        app: bestverifybot
+    spec:
+      containers:
+      - name: bestverifybot
+        image: ${DOCKER_REGISTRY}/bestverifybot:${DOCKER_TAG}
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: MODEL_PATH
+          value: "/app/models"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /app/models
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: model-pvc
+      imagePullSecrets:
+      - name: docker-registry-secret 

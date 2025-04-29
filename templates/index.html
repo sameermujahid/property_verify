@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Property Verifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray);
+        }
+        
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .card-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .results-container {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 25px;
+}
+
+        
+        .result-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            height: 100%;
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .result-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .trust-score {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .score-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .score-label {
+            font-size: 1rem;
+            color: var(--gray);
+        }
+        
+        .progress-container {
+            margin: 15px 0;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .alert-danger {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .alert-warning {
+            background-color: rgba(248, 150, 30, 0.1);
+            color: var(--warning);
+            border-left: 4px solid var(--warning);
+        }
+        
+        .alert-success {
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+        
+        .suggestion-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .suggestion-item {
+            padding: 10px 15px;
+            background-color: rgba(67, 97, 238, 0.05);
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .preview-item {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .preview-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .pdf-preview {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .pdf-filename {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .gallery-item {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            aspect-ratio: 1;
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .badge-primary { background-color: rgba(67, 97, 238, 0.1); color: var(--primary); }
+        .badge-success { background-color: rgba(76, 201, 240, 0.1); color: var(--success); }
+        .badge-warning { background-color: rgba(248, 150, 30, 0.1); color: var(--warning); }
+        .badge-danger { background-color: rgba(247, 37, 133, 0.1); color: var(--danger); }
+        
+        .explanation-box {
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--info);
+        }
+        
+        .explanation-title {
+            font-weight: 600;
+            color: var(--info);
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid, .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+        }
+        
+        .property-summary {
+            padding: 15px;
+        }
+        
+        .property-details p {
+            margin-bottom: 8px;
+        }
+        
+        .final-verdict {
+            padding: 15px;
+        }
+        
+        .verdict-box {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .verdict-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+        
+        .verdict-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .verdict-legitimate {
+            background-color: rgba(76, 201, 240, 0.1);
+            border-left: 4px solid var(--success);
+        }
+        
+        .verdict-suspicious {
+            background-color: rgba(248, 150, 30, 0.1);
+            border-left: 4px solid var(--warning);
+        }
+        
+        .verdict-fraudulent {
+            background-color: rgba(247, 37, 133, 0.1);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .verification-scores {
+            padding: 15px;
+        }
+        
+        .score-item {
+            margin-bottom: 15px;
+        }
+        
+        .score-label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .score-bar-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .score-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            flex-grow: 1;
+            margin-right: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .score-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .score-value {
+            font-weight: 600;
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .red-flags {
+            padding: 15px;
+        }
+        
+        .verdict-score {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: rgba(67, 97, 238, 0.05);
+            border-radius: var(--border-radius);
+        }
+        
+        .verdict-details {
+            margin-top: 20px;
+        }
+        
+        .verdict-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: var(--border-radius);
+        }
+        
+        .verdict-section h4 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+        
+        #criticalIssuesSection {
+            background-color: rgba(247, 37, 133, 0.05);
+            border-left: 4px solid var(--danger);
+        }
+        
+        #warningsSection {
+            background-color: rgba(248, 150, 30, 0.05);
+            border-left: 4px solid var(--warning);
+        }
+        
+        #recommendationsSection {
+            background-color: rgba(76, 201, 240, 0.05);
+            border-left: 4px solid var(--success);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Property Verifier & Fraud Detection</h1>
+            <p class="subtitle">Powered by advanced AI models to verify property listings and detect potential fraud</p>
+        </header>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Property Details</h2>
+            </div>
+            
+                <form id="propertyForm">
+                <div class="section-title">Basic Information</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                        <label class="form-label" for="propertyName">Property Name</label>
+                        <input type="text" class="form-control" id="propertyName" name="property_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="propertyType">Property Type</label>
+                        <select class="form-control" id="propertyType" name="property_type" required>
+                            <option value="">Select Type</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="House">House</option>
+                                <option value="Condo">Condo</option>
+                                <option value="Townhouse">Townhouse</option>
+                            <option value="Villa">Villa</option>
+                                <option value="Land">Land</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="status">Status</label>
+                        <select class="form-control" id="status" name="status" required>
+                            <option value="">Select Status</option>
+                                <option value="For Sale">For Sale</option>
+                                <option value="For Rent">For Rent</option>
+                                <option value="Sold">Sold</option>
+                            <option value="Under Contract">Under Contract</option>
+                                <option value="Pending">Pending</option>
+                            </select>
+                        </div>
+                        </div>
+                        
+                <div class="form-group">
+                    <label class="form-label" for="description">Property Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                    
+                <div class="section-title">Location Details</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                        <label class="form-label" for="address">Address</label>
+                        <input type="text" class="form-control" id="address" name="address" required>
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="city">City</label>
+                        <input type="text" class="form-control" id="city" name="city" required>
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="state">State/Province</label>
+                        <input type="text" class="form-control" id="state" name="state" required>
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="country">Country</label>
+                        <input type="text" class="form-control" id="country" name="country" required>
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="zip">Zip/Postal Code</label>
+                        <input type="text" class="form-control" id="zip" name="zip" required>
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="latitude">Latitude</label>
+                        <input type="text" class="form-control" id="latitude" name="latitude" placeholder="e.g. 40.7128">
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="longitude">Longitude</label>
+                        <input type="text" class="form-control" id="longitude" name="longitude" placeholder="e.g. -74.0060">
+                        </div>
+                    </div>
+                    
+                <div class="section-title">Property Specifications</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                        <label class="form-label" for="bedrooms">Bedrooms</label>
+                        <input type="number" class="form-control" id="bedrooms" name="bedrooms" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="bathrooms">Bathrooms</label>
+                        <input type="number" class="form-control" id="bathrooms" name="bathrooms" min="0" step="0.5">
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="totalRooms">Total Rooms</label>
+                        <input type="number" class="form-control" id="totalRooms" name="total_rooms" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="yearBuilt">Year Built</label>
+                        <input type="number" class="form-control" id="yearBuilt" name="year_built" min="1800" max="2100">
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="parking">Parking Spaces</label>
+                        <input type="number" class="form-control" id="parking" name="parking" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="sqFt">Square Feet</label>
+                        <input type="text" class="form-control" id="sqFt" name="sq_ft" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                        <label class="form-label" for="marketValue">Market Value</label>
+                        <input type="text" class="form-control" id="marketValue" name="market_value" min="0">
+                    </div>
+                        </div>
+                        
+                        <div class="form-group">
+                    <label class="form-label" for="amenities">Amenities (comma separated)</label>
+                    <input type="text" class="form-control" id="amenities" name="amenities" placeholder="e.g. Pool, Gym, Garden, Garage">
+                        </div>
+                        
+                        <div class="form-group">
+                    <label class="form-label" for="nearbyLandmarks">Nearby Landmarks</label>
+                    <input type="text" class="form-control" id="nearbyLandmarks" name="nearby_landmarks" placeholder="e.g. School, Hospital, Park, Shopping Mall">
+                        </div>
+                        
+                        <div class="form-group">
+                    <label class="form-label" for="legalDetails">Legal & Infrastructure Details</label>
+                    <textarea class="form-control" id="legalDetails" name="legal_details" rows="3" placeholder="Include zoning, permits, utilities, etc."></textarea>
+                        </div>
+                
+                <div class="section-title">Documents & Images</div>
+                <div class="form-group">
+                    <label class="form-label" for="images">Upload Images (JPG/PNG)</label>
+                    <input type="file" class="form-control" id="images" name="images" accept="image/jpeg, image/png" multiple>
+                    <div class="image-preview" id="imagePreview"></div>
+                    </div>
+                    
+                        <div class="form-group">
+                    <label class="form-label" for="documents">Upload Documents (PDF)</label>
+                    <input type="file" class="form-control" id="documents" name="documents" accept="application/pdf" multiple>
+                    <div id="pdfPreview"></div>
+                            </div>
+                        
+                        <div class="form-group">
+                    <button type="submit" class="btn btn-block" id="submitBtn">Verify Property with AI</button>
+                </div>
+            </form>
+                        </div>
+                        
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>AI models are analyzing your property data...</p>
+            <p class="subtitle">This may take a moment as we're processing multiple AI models</p>
+                            </div>
+        
+        <div class="results-container" id="resultsContainer">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">AI Verification Results</h2>
+                        </div>
+                        
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🏠</div>
+                            <div class="result-title">Property Summary</div>
+                        </div>
+                        <div class="property-summary">
+                            <h3 id="propertyTitle">Property Details</h3>
+                            <div class="property-details">
+                                <p><strong>Name:</strong> <span id="summaryName"></span></p>
+                                <p><strong>Type:</strong> <span id="summaryType"></span></p>
+                                <p><strong>Status:</strong> <span id="summaryStatus"></span></p>
+                                <p><strong>Location:</strong> <span id="summaryLocation"></span></p>
+                                <p><strong>Price:</strong> <span id="summaryPrice"></span></p>
+                                <p><strong>Size:</strong> <span id="summarySize"></span></p>
+                                <p><strong>Bedrooms/Bathrooms:</strong> <span id="summaryRooms"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">⚠️</div>
+                            <div class="result-title">Final Verdict</div>
+                        </div>
+                        <div class="final-verdict" id="finalVerdict">
+                            <div class="verdict-box" id="verdictBox">
+                                <div class="verdict-icon" id="verdictIcon">⏳</div>
+                                <div class="verdict-text" id="verdictText">Analysis in progress...</div>
+                            </div>
+                            <div class="verdict-score">
+                                <div class="score-label">Overall Score</div>
+                                <div class="score-value" id="verdictScoreValue">--</div>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="verdictScoreBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="verdict-details">
+                                <div class="verdict-section" id="criticalIssuesSection">
+                                    <h4>Critical Issues</h4>
+                                    <ul id="criticalIssuesList" class="suggestion-list">
+                                        <!-- Will be populated by JavaScript -->
+                                    </ul>
+                                </div>
+                                <div class="verdict-section" id="warningsSection">
+                                    <h4>Warnings</h4>
+                                    <ul id="warningsList" class="suggestion-list">
+                                        <!-- Will be populated by JavaScript -->
+                                    </ul>
+                                </div>
+                                <div class="verdict-section" id="recommendationsSection">
+                                    <h4>Recommendations</h4>
+                                    <ul id="recommendationsList" class="suggestion-list">
+                                        <!-- Will be populated by JavaScript -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🔍</div>
+                            <div class="result-title">Detailed Verification</div>
+                        </div>
+                        <div class="verification-scores">
+                            <div class="score-item">
+                                <div class="score-label">Trust Score</div>
+                                <div class="score-bar-container">
+                                    <div class="score-bar" id="trustBar"></div>
+                                    <div class="score-value" id="trustValue">--</div>
+                                </div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-label">Image Authenticity</div>
+                                <div class="score-bar-container">
+                                    <div class="score-bar" id="imageBar"></div>
+                                    <div class="score-value" id="imageValue">--</div>
+                                </div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-label">Document Verification</div>
+                                <div class="score-bar-container">
+                                    <div class="score-bar" id="documentBar"></div>
+                                    <div class="score-value" id="documentValue">--</div>
+                                </div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-label">Content Quality</div>
+                                <div class="score-bar-container">
+                                    <div class="score-bar" id="contentBar"></div>
+                                    <div class="score-value" id="contentValue">--</div>
+                                </div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-label">Location Accuracy</div>
+                                <div class="score-bar-container">
+                                    <div class="score-bar" id="locationBar"></div>
+                                    <div class="score-value" id="locationValue">--</div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+                
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🚩</div>
+                            <div class="result-title">Red Flags</div>
+                        </div>
+                        <div class="red-flags">
+                            <ul id="redFlagsList" class="suggestion-list">
+                                <!-- Will be populated by JavaScript -->
+                            </ul>
+                    </div>
+                </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">📊</div>
+                            <div class="result-title">Trust Score</div>
+                        </div>
+                        <div class="trust-score">
+                            <div class="score-value" id="trustScoreValue">--</div>
+                            <div class="score-label">Trust Score</div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="trustScoreBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trustScoreChart"></canvas>
+                        </div>
+                        <div class="explanation-box">
+                            <div class="explanation-title">AI Reasoning</div>
+                            <div id="trustReasoning"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🔍</div>
+                            <div class="result-title">Fraud Analysis</div>
+                            </div>
+                        <div id="fraudAlertContainer"></div>
+                        <div class="chart-container">
+                            <canvas id="fraudAnalysisChart"></canvas>
+                        </div>
+                        <div class="explanation-box">
+                            <div class="explanation-title">AI Reasoning</div>
+                            <div id="fraudReasoning"></div>
+                        </div>
+            </div>
+            
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">📝</div>
+                            <div class="result-title">AI Summary</div>
+                        </div>
+                        <div id="aiSummary"></div>
+                </div>
+                
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">💡</div>
+                            <div class="result-title">Improvement Suggestions</div>
+                        </div>
+                        <div id="improvementSuggestions"></div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🏠</div>
+                            <div class="result-title">Property Quality Assessment</div>
+                </div>
+                        <div id="qualityAssessment"></div>
+                        <div class="chart-container">
+                            <canvas id="qualityChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">📍</div>
+                            <div class="result-title">Location Analysis</div>
+                        </div>
+                        <div id="locationAnalysis"></div>
+                        <div class="chart-container">
+                            <canvas id="locationChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">💰</div>
+                            <div class="result-title">Price Analysis</div>
+                        </div>
+                        <div id="priceAnalysis"></div>
+                        <div class="chart-container">
+                            <canvas id="priceChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">⚖️</div>
+                            <div class="result-title">Legal Analysis</div>
+                        </div>
+                        <div id="legalAnalysis"></div>
+                        <div class="chart-container">
+                            <canvas id="legalChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🔄</div>
+                            <div class="result-title">Cross-Validation Checks</div>
+                        </div>
+                        <div id="crossValidation"></div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">📄</div>
+                            <div class="result-title">Document Analysis</div>
+                        </div>
+                        <div id="documentAnalysis"></div>
+                        <div class="chart-container">
+                            <canvas id="documentChart"></canvas>
+                        </div>
+                    </div>
+                
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🖼️</div>
+                            <div class="result-title">Image Analysis</div>
+                        </div>
+                        <div id="imageAnalysis"></div>
+                        <div class="image-gallery" id="imageGallery"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables to store form data
+        let uploadedImages = [];
+        let uploadedPDFs = [];
+        
+        // Initialize charts
+        let trustScoreChart;
+        let fraudAnalysisChart;
+        let qualityChart;
+        let locationChart;
+        let priceChart;
+        let legalChart;
+        let documentChart;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Request location access when page loads
+            requestLocationAccess();
+            
+            const propertyForm = document.getElementById('propertyForm');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const imageInput = document.getElementById('images');
+            const imagePreview = document.getElementById('imagePreview');
+            const pdfInput = document.getElementById('documents');
+            const pdfPreview = document.getElementById('pdfPreview');
+            
+            // Handle image uploads
+            imageInput.addEventListener('change', function(e) {
+                handleImageUpload(e.target.files);
+            });
+            
+            // Handle PDF uploads
+            pdfInput.addEventListener('change', function(e) {
+                handlePDFUpload(e.target.files);
+            });
+            
+            // Form submission
+            propertyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitForm();
+            });
+            
+            // Initialize charts
+            initCharts();
+        });
+        
+        function requestLocationAccess() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        
+                        // Update form fields with coordinates
+                        document.getElementById('latitude').value = latitude;
+                        document.getElementById('longitude').value = longitude;
+                        
+                        // Send to backend to get address details
+                        fetch('/get-location', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                latitude: latitude,
+                                longitude: longitude
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                // Fill form fields with location data
+                                document.getElementById('address').value = data.address || '';
+                                document.getElementById('city').value = data.city || '';
+                                document.getElementById('state').value = data.state || '';
+                                document.getElementById('country').value = data.country || '';
+                                document.getElementById('zip').value = data.postal_code || '';
+                                
+                                console.log('Location data loaded successfully');
+                            } else {
+                                console.error('Error getting location details:', data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting location details:', error);
+                        });
+                    },
+                    function(error) {
+                        console.error('Error getting location:', error.message);
+                        // Show a message to the user about location access
+                        const locationMessage = document.createElement('div');
+                        locationMessage.className = 'alert alert-warning';
+                        locationMessage.innerHTML = 'Location access denied or unavailable. Please enter your location manually.';
+                        document.querySelector('.container').prepend(locationMessage);
+                        
+                        // Auto-remove the message after 5 seconds
+                        setTimeout(() => {
+                            locationMessage.remove();
+                        }, 5000);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                console.error('Geolocation is not supported by this browser');
+            }
+        }
+        
+        function handleImageUpload(files) {
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.innerHTML = ''; // Clear existing previews
+            uploadedImages = []; // Reset uploaded images array
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.match('image.*')) continue;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageData = e.target.result;
+                    uploadedImages.push({
+                        name: file.name,
+                        data: imageData,
+                        file: file
+                    });
+                    
+                    // Create preview
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${imageData}" alt="${file.name}">
+                        <button type="button" class="preview-remove" data-index="${uploadedImages.length - 1}">×</button>
+                    `;
+                    imagePreview.appendChild(previewItem);
+                    
+                    // Add remove functionality
+                    previewItem.querySelector('.preview-remove').addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        uploadedImages.splice(index, 1);
+                        imagePreview.removeChild(previewItem);
+                        updateImagePreviews();
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function updateImagePreviews() {
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.innerHTML = '';
+            
+            uploadedImages.forEach((image, index) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.innerHTML = `
+                    <img src="${image.data}" alt="${image.name}">
+                    <button type="button" class="preview-remove" data-index="${index}">×</button>
+                `;
+                imagePreview.appendChild(previewItem);
+                
+                previewItem.querySelector('.preview-remove').addEventListener('click', function() {
+                    uploadedImages.splice(index, 1);
+                    updateImagePreviews();
+                });
+            });
+        }
+        
+        function handlePDFUpload(files) {
+            const pdfPreview = document.getElementById('pdfPreview');
+            pdfPreview.innerHTML = ''; // Clear existing previews
+            uploadedPDFs = []; // Reset uploaded PDFs array
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type !== 'application/pdf') continue;
+                
+                uploadedPDFs.push({
+                    name: file.name,
+                    file: file
+                });
+                
+                // Create preview
+                const previewItem = document.createElement('div');
+                previewItem.className = 'pdf-preview';
+                previewItem.innerHTML = `
+                    <div class="pdf-filename">${file.name}</div>
+                    <button type="button" class="btn" data-index="${uploadedPDFs.length - 1}">Remove</button>
+                `;
+                pdfPreview.appendChild(previewItem);
+                
+                // Add remove functionality
+                previewItem.querySelector('.btn').addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    uploadedPDFs.splice(index, 1);
+                    pdfPreview.removeChild(previewItem);
+                    updatePDFPreviews();
+                });
+            }
+        }
+        
+        function updatePDFPreviews() {
+            const pdfPreview = document.getElementById('pdfPreview');
+            pdfPreview.innerHTML = '';
+            
+            uploadedPDFs.forEach((pdf, index) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'pdf-preview';
+                previewItem.innerHTML = `
+                    <div class="pdf-filename">${pdf.name}</div>
+                    <button type="button" class="btn" data-index="${index}">Remove</button>
+                `;
+                pdfPreview.appendChild(previewItem);
+                
+                previewItem.querySelector('.btn').addEventListener('click', function() {
+                    uploadedPDFs.splice(index, 1);
+                    updatePDFPreviews();
+                });
+            });
+        }
+        
+        function initCharts() {
+            try {
+                // Store all charts in an array for easier management
+                window.charts = [];
+                
+                // Trust Score Chart initialization
+                const trustCtx = document.getElementById('trustScoreChart').getContext('2d');
+                trustScoreChart = new Chart(trustCtx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [0, 100],
+                        backgroundColor: [
+                            '#4361ee',
+                            '#f1f1f1'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    circumference: 180,
+                    rotation: -90,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+                charts.push(trustScoreChart);
+            
+            // Fraud Analysis Chart (Bar)
+            const fraudAnalysisCtx = document.getElementById('fraudAnalysisChart').getContext('2d');
+            fraudAnalysisChart = new Chart(fraudAnalysisCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Legitimate', 'Suspicious', 'Fraudulent'],
+                    datasets: [{
+                        label: 'Fraud Indicators',
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            '#4cc9f0',
+                            '#f8961e',
+                            '#f72585'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+            
+            // Quality Assessment Chart
+            const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+            qualityChart = new Chart(qualityCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Completeness', 'Accuracy', 'Clarity', 'Authenticity', 'Detail'],
+                    datasets: [{
+                        label: 'Quality Score',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                        borderColor: '#4361ee',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#4361ee'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+            
+            // Location Analysis Chart
+            const locationCtx = document.getElementById('locationChart').getContext('2d');
+            locationChart = new Chart(locationCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Complete', 'Partial', 'Missing'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            '#4cc9f0',
+                            '#f8961e',
+                            '#f72585'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+            
+            // Price Analysis Chart
+            const priceCtx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(priceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Market Value', 'Price per Sq.Ft.'],
+                    datasets: [{
+                        label: 'Price Analysis',
+                        data: [0, 0],
+                        backgroundColor: [
+                            '#4361ee',
+                            '#4895ef'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+            
+            // Legal Analysis Chart
+            const legalCtx = document.getElementById('legalChart').getContext('2d');
+            legalChart = new Chart(legalCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Complete', 'Partial', 'Missing'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            '#4cc9f0',
+                            '#f8961e',
+                            '#f72585'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+            
+            // Document Analysis Chart
+            const documentCtx = document.getElementById('documentChart').getContext('2d');
+            documentChart = new Chart(documentCtx, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Authentic', 'Suspicious', 'Incomplete'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            '#4cc9f0',
+                            '#f8961e',
+                            '#f72585'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+                
+                // Add window resize handler for chart responsiveness
+                window.addEventListener('resize', debounce(() => {
+                    charts.forEach(chart => {
+                        if (chart && typeof chart.resize === 'function') {
+                            chart.resize();
+                        }
+                    });
+                }, 250));
+                
+            } catch (error) {
+                console.error('Error initializing charts:', error);
+                document.getElementById('chartErrors').innerHTML = 
+                    '<div class="alert alert-danger">Error initializing charts. Please refresh the page.</div>';
+            }
+        }
+        
+        // Utility function for debouncing
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Data validation function
+        function validateAnalysisData(data) {
+            return {
+                trustScore: {
+                    score: data.trust_score?.score ?? 0,
+                    reasoning: data.trust_score?.reasoning ?? 'No reasoning provided'
+                },
+                fraudClassification: {
+                    alertLevel: data.fraud_classification?.alert_level ?? 'low',
+                    classification: data.fraud_classification?.classification ?? 'Unknown',
+                    confidence: data.fraud_classification?.confidence ?? 0,
+                    indicators: data.fraud_classification?.fraud_indicators ?? [],
+                    scores: data.fraud_classification?.indicator_scores ?? []
+                },
+                qualityAssessment: {
+                    assessment: data.quality_assessment?.assessment ?? 'Unknown',
+                    score: data.quality_assessment?.score ?? 0,
+                    isAiGenerated: data.quality_assessment?.is_ai_generated ?? false,
+                    reasoning: data.quality_assessment?.reasoning ?? 'No reasoning provided'
+                },
+                // ... other validations
+            };
+        }
+        
+        // Safe chart update function
+        function updateChart(chart, newData, options = {}) {
+            try {
+                if (chart && typeof chart.update === 'function') {
+                    chart.data = newData;
+                    chart.update(options);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error updating chart:', error);
+                return false;
+            }
+        }
+        
+        function submitForm() {
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+            
+            // Create form data
+            const formData = new FormData(document.getElementById('propertyForm'));
+            
+            // Clear any existing image/document entries
+            formData.delete('images');
+            formData.delete('documents');
+            
+            // Add images (only once)
+            uploadedImages.forEach((image) => {
+                formData.append('images', image.file);
+            });
+            
+            // Add PDFs (only once)
+            uploadedPDFs.forEach((pdf) => {
+                formData.append('documents', pdf.file);
+            });
+            
+            // Send to backend
+            fetch('/verify', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+                
+                // Display results
+                displayResults(data);
+                
+                // Show results container
+                document.getElementById('resultsContainer').style.display = 'block';
+                
+                // Scroll to results
+                document.getElementById('resultsContainer').scrollIntoView({ behavior: 'smooth' });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingIndicator').style.display = 'none';
+                alert('An error occurred while processing your request. Please try again.');
+            });
+        }
+        function displayResults(data) {
+            console.log("Received data:", JSON.stringify(data));
+
+            // Validate and sanitize data
+            const validatedData = validateAnalysisData(data);
+            
+            try {
+                // Display Trust Score with validated data
+                const trustScore = validatedData.trustScore.score;
+                document.getElementById('trustScoreValue').textContent = trustScore;
+                document.getElementById('trustScoreBar').style.width = `${trustScore}%`;
+                document.getElementById('trustReasoning').textContent = validatedData.trustScore.reasoning;
+                
+                // Update Trust Score Chart safely
+                updateChart(trustScoreChart, {
+                    datasets: [{
+                        data: [trustScore, 100 - trustScore]
+                    }]
+                });
+                
+                // Display Fraud Analysis
+                const fraudLevel = validatedData.fraudClassification.alertLevel;
+                const fraudContainer = document.getElementById('fraudAlertContainer');
+                fraudContainer.innerHTML = '';
+
+                const alertClass = fraudLevel === 'high' ? 'alert-danger' :
+                                  fraudLevel === 'medium' ? 'alert-warning' : 'alert-success';
+
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert ${alertClass}`;
+                
+                // Create detailed fraud analysis display
+                let fraudContent = `<h4>Fraud Classification</h4>`;
+                fraudContent += `<p>Alert Level: ${fraudLevel.toUpperCase()}</p>`;
+                
+                if (data.fraud_classification.high_risk && data.fraud_classification.high_risk.length > 0) {
+                    fraudContent += `<div class="risk-section">
+                        <h5>High Risk Indicators:</h5>
+                        <ul>`;
+                    data.fraud_classification.high_risk.forEach(([indicator, score]) => {
+                        fraudContent += `<li>${indicator} (${Math.round(score * 100)}% confidence)</li>`;
+                    });
+                    fraudContent += `</ul></div>`;
+                }
+                
+                if (data.fraud_classification.medium_risk && data.fraud_classification.medium_risk.length > 0) {
+                    fraudContent += `<div class="risk-section">
+                        <h5>Medium Risk Indicators:</h5>
+                        <ul>`;
+                    data.fraud_classification.medium_risk.forEach(([indicator, score]) => {
+                        fraudContent += `<li>${indicator} (${Math.round(score * 100)}% confidence)</li>`;
+                    });
+                    fraudContent += `</ul></div>`;
+                }
+                
+                if (data.fraud_classification.low_risk && data.fraud_classification.low_risk.length > 0) {
+                    fraudContent += `<div class="risk-section">
+                        <h5>Low Risk Indicators:</h5>
+                        <ul>`;
+                    data.fraud_classification.low_risk.forEach(([indicator, score]) => {
+                        fraudContent += `<li>${indicator} (${Math.round(score * 100)}% confidence)</li>`;
+                    });
+                    fraudContent += `</ul></div>`;
+                }
+                
+                alertDiv.innerHTML = fraudContent;
+                fraudContainer.appendChild(alertDiv);
+
+                // Update Fraud Analysis Chart
+                const fraudChartData = {
+                    labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+                    datasets: [{
+                        data: [
+                            data.fraud_classification.high_risk ? data.fraud_classification.high_risk.reduce((sum, [_, score]) => sum + score, 0) * 100 : 0,
+                            data.fraud_classification.medium_risk ? data.fraud_classification.medium_risk.reduce((sum, [_, score]) => sum + score, 0) * 100 : 0,
+                            data.fraud_classification.low_risk ? data.fraud_classification.low_risk.reduce((sum, [_, score]) => sum + score, 0) * 100 : 0
+                        ],
+                        backgroundColor: ['#dc3545', '#ffc107', '#28a745']
+                    }]
+                };
+                
+                updateChart(fraudAnalysisChart, fraudChartData);
+
+                document.getElementById('fraudReasoning').textContent = `This property was classified as ${validatedData.fraudClassification.classification} based on AI analysis of the listing details.`;
+
+                // Display AI Summary
+                document.getElementById('aiSummary').textContent = data.summary || "No summary available";
+
+                // Display Improvement Suggestions
+                const improvementContainer = document.getElementById('improvementSuggestions');
+                improvementContainer.innerHTML = '';
+
+                // Create sections for different types of improvements
+                const sections = {
+                    'Critical Issues': [],
+                    'Important Improvements': [],
+                    'Optional Enhancements': []
+                };
+
+                // Safely check if improvement_suggestions exists and is an array
+                if (data && data.improvement_suggestions && Array.isArray(data.improvement_suggestions)) {
+                    // Categorize improvements based on severity
+                    data.improvement_suggestions.forEach(suggestion => {
+                        if (suggestion && typeof suggestion === 'string') {
+                            if (suggestion.toLowerCase().includes('critical') || 
+                                suggestion.toLowerCase().includes('required') || 
+                                suggestion.toLowerCase().includes('must')) {
+                                sections['Critical Issues'].push(suggestion);
+                            } else if (suggestion.toLowerCase().includes('should') || 
+                                     suggestion.toLowerCase().includes('recommended')) {
+                                sections['Important Improvements'].push(suggestion);
+                            } else {
+                                sections['Optional Enhancements'].push(suggestion);
+                            }
+                        }
+                    });
+                }
+
+                // Display each section
+                Object.entries(sections).forEach(([title, suggestions]) => {
+                    if (suggestions.length > 0) {
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'improvement-section mb-4';
+                        
+                        const sectionTitle = document.createElement('h5');
+                        sectionTitle.className = title === 'Critical Issues' ? 'text-danger' : 
+                                               title === 'Important Improvements' ? 'text-warning' : 'text-info';
+                        sectionTitle.textContent = title;
+                        
+                        const suggestionList = document.createElement('ul');
+                        suggestionList.className = 'list-unstyled';
+                        
+                        suggestions.forEach(suggestion => {
+                            const li = document.createElement('li');
+                            li.className = 'mb-2';
+                            li.innerHTML = `<i class="fas fa-arrow-right me-2"></i>${suggestion}`;
+                            suggestionList.appendChild(li);
+                        });
+                        
+                        sectionDiv.appendChild(sectionTitle);
+                        sectionDiv.appendChild(suggestionList);
+                        improvementContainer.appendChild(sectionDiv);
+                    }
+                });
+
+                // If no suggestions are available, display a message
+                if (!Object.values(sections).some(suggestions => suggestions.length > 0)) {
+                    improvementContainer.innerHTML = '<p class="text-muted">No improvement suggestions available at this time.</p>';
+                }
+
+                // Display Quality Assessment
+                const qualityDiv = document.getElementById('qualityAssessment');
+                qualityDiv.innerHTML = '';
+
+                if (data.quality_assessment) {
+                    const qualityScore = data.quality_assessment.score || 0;
+                    const assessment = data.quality_assessment.assessment || 'Not assessed';
+                    const reasoning = data.quality_assessment.reasoning || 'No reasoning provided';
+                    const isAiGenerated = data.quality_assessment.is_ai_generated || false;
+
+                    qualityDiv.innerHTML = `
+                        <div class="quality-score mb-4">
+                            <h5>Content Quality Score</h5>
+                            <div class="score-display">
+                                <span class="score-value">${qualityScore}%</span>
+                                <div class="progress">
+                                    <div class="progress-bar ${getScoreColorClass(qualityScore)}" 
+                                         role="progressbar" 
+                                         style="width: ${qualityScore}%"
+                                         aria-valuenow="${qualityScore}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quality-details">
+                            <div class="detail-item">
+                                <strong>Assessment:</strong> ${assessment}
+                            </div>
+                            <div class="detail-item">
+                                <strong>AI Generated:</strong> ${isAiGenerated ? 'Yes' : 'No'}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Analysis:</strong>
+                                <p class="reasoning-text">${reasoning}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Update Quality Chart
+                    const qualityChartData = {
+                        labels: ['Completeness', 'Accuracy', 'Clarity', 'Authenticity', 'Detail'],
+                        datasets: [{
+                            label: 'Quality Metrics',
+                            data: [
+                                data.quality_assessment.completeness_score || 0,
+                                data.quality_assessment.accuracy_score || 0,
+                                data.quality_assessment.clarity_score || 0,
+                                data.quality_assessment.authenticity_score || 0,
+                                data.quality_assessment.detail_score || 0
+                            ],
+                            backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                            borderColor: '#4361ee',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#4361ee'
+                        }]
+                    };
+
+                    updateChart(qualityChart, qualityChartData);
+                } else {
+                    qualityDiv.innerHTML = '<p class="text-muted">No quality assessment available at this time.</p>';
+                }
+
+                // Add helper function for score color classes
+                function getScoreColorClass(score) {
+                    if (score >= 80) return 'bg-success';
+                    if (score >= 60) return 'bg-info';
+                    if (score >= 40) return 'bg-warning';
+                    return 'bg-danger';
+                }
+
+                // Display Location Analysis
+                const locationDiv = document.getElementById('locationAnalysis');
+                if (data.location_analysis) {
+                    locationDiv.innerHTML = `
+                        <p><strong>Assessment:</strong> ${data.location_analysis.assessment || "Unknown"}</p>
+                        <p><strong>Completeness:</strong> ${data.location_analysis.completeness_score || 0}%</p>
+                        <p><strong>Coordinates:</strong> ${data.location_analysis.coordinates_check || "Unknown"}</p>
+                        <p><strong>Landmarks:</strong> ${data.location_analysis.landmarks_provided ? 'Provided' : 'Not provided'}</p>
+                    `;
+
+                    // Update Location Chart
+                    updateChart(locationChart, {
+                        datasets: [{
+                            data: [
+                                data.location_analysis.completeness_score || 0,
+                                100 - (data.location_analysis.completeness_score || 0),
+                                data.location_analysis.coordinates_check === 'coordinates_missing' ? 30 : 0
+                            ]
+                        }]
+                    });
+                } else {
+                    locationDiv.innerHTML = '<p>No location analysis available</p>';
+                }
+
+                // Display Price Analysis
+                const priceDiv = document.getElementById('priceAnalysis');
+                if (data.price_analysis && data.price_analysis.has_price) {
+                    priceDiv.innerHTML = `
+                        <p><strong>Assessment:</strong> ${data.price_analysis.assessment || "Unknown"}</p>
+                        <p><strong>Price:</strong> ₹${(data.price_analysis.price || 0).toLocaleString()}</p>
+                        ${data.price_analysis.has_sqft ? `<p><strong>Price per Sq.Ft.:</strong> ₹${(data.price_analysis.price_per_sqft || 0).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>` : ''}
+                        <p><strong>Confidence:</strong> ${Math.round((data.price_analysis.confidence || 0) * 100)}%</p>
+                    `;
+
+                    // Update Price Chart
+                    updateChart(priceChart, {
+                        labels: ['Market Value (thousands)', 'Price per Sq.Ft.'],
+                        datasets: [{
+                            data: [
+                                (data.price_analysis.price || 0) / 1000, // Scale down for better visualization
+                                data.price_analysis.price_per_sqft || 0
+                            ]
+                        }]
+                    });
+                } else {
+                    priceDiv.innerHTML = `<p>No price information provided for analysis.</p>`;
+                }
+
+                // Display Legal Analysis
+                const legalDiv = document.getElementById('legalAnalysis');
+                if (data.legal_analysis) {
+                    legalDiv.innerHTML = `
+                        <p><strong>Assessment:</strong> ${data.legal_analysis.assessment || "Unknown"}</p>
+                        <p><strong>Completeness:</strong> ${data.legal_analysis.completeness_score || 0}%</p>
+                        <p><strong>Summary:</strong> ${data.legal_analysis.summary || "No summary available"}</p>
+                        ${data.legal_analysis.terms_found && data.legal_analysis.terms_found.length > 0 ? `<p><strong>Legal Terms Found:</strong> ${data.legal_analysis.terms_found.join(', ')}</p>` : ''}
+                        ${data.legal_analysis.potential_issues ? '<p class="alert alert-warning">Potential legal issues detected</p>' : ''}
+                    `;
+
+                    // Update Legal Chart
+                    updateChart(legalChart, {
+                        datasets: [{
+                            data: [
+                                data.legal_analysis.completeness_score || 0,
+                                100 - (data.legal_analysis.completeness_score || 0),
+                                data.legal_analysis.potential_issues ? 30 : 0
+                            ]
+                        }]
+                    });
+                } else {
+                    legalDiv.innerHTML = '<p>No legal analysis available</p>';
+                }
+
+                // Display Cross-Validation Checks
+                const crossValidationDiv = document.getElementById('crossValidation');
+                crossValidationDiv.innerHTML = '<ul class="suggestion-list">';
+
+                try {
+                    // Safely check if cross_validation exists and is an array
+                    if (data && data.cross_validation && Array.isArray(data.cross_validation)) {
+                        // Only proceed if the array has items
+                        if (data.cross_validation.length > 0) {
+                            data.cross_validation.forEach(check => {
+                                if (check && typeof check === 'object') {
+                                    const status = check.status || 'unknown';
+                                    const checkName = check.check || 'Check';
+                                    const message = check.message || 'No details available';
+
+                                    // Determine status class
+                                    let statusClass = 'badge-warning'; // Default
+                                    if (['consistent', 'valid', 'reasonable', 'match', 'likely_valid'].includes(status)) {
+                                        statusClass = 'badge-success';
+                                    } else if (['suspicious', 'inconsistent', 'invalid', 'no_match'].includes(status)) {
+                                        statusClass = 'badge-danger';
+                                    }
+
+                                    crossValidationDiv.innerHTML += `
+                                        <li class="suggestion-item">
+                                            <span class="badge ${statusClass}">${status}</span>
+                                            <strong>${checkName}:</strong> ${message}
+                                        </li>
+                                    `;
+                                }
+                            });
+                        } else {
+                            crossValidationDiv.innerHTML += '<li class="suggestion-item">No cross-validation checks performed</li>';
+                        }
+                    } else {
+                        crossValidationDiv.innerHTML += '<li class="suggestion-item">No cross-validation data available</li>';
+                    }
+                } catch (error) {
+                    console.error("Error displaying cross-validation:", error);
+                    crossValidationDiv.innerHTML += '<li class="suggestion-item">Error displaying cross-validation results</li>';
+                }
+
+                crossValidationDiv.innerHTML += '</ul>';
+
+                // Display Document Analysis
+                const documentDiv = document.getElementById('documentAnalysis');
+                documentDiv.innerHTML = '';
+
+                if (data.document_analysis && data.document_analysis.pdf_count > 0) {
+                    documentDiv.innerHTML = `<p><strong>Documents Analyzed:</strong> ${data.document_analysis.pdf_count}</p>`;
+
+                    data.document_analysis.pdf_analysis.forEach((pdf, index) => {
+                        documentDiv.innerHTML += `
+                            <div class="pdf-preview">
+                                <p><strong>Document ${index + 1}</strong></p>
+                                <p><strong>Type:</strong> ${pdf.document_type.classification} (${Math.round(pdf.document_type.confidence * 100)}% confidence)</p>
+                                <p><strong>Authenticity:</strong> ${pdf.authenticity.assessment} (${Math.round(pdf.authenticity.confidence * 100)}% confidence)</p>
+                                <p><strong>Summary:</strong> ${pdf.summary}</p>
+                                <p><strong>Contains Signatures:</strong> ${pdf.contains_signatures ? 'Yes' : 'No'}</p>
+                                <p><strong>Contains Dates:</strong> ${pdf.contains_dates ? 'Yes' : 'No'}</p>
+                            </div>
+                        `;
+                    });
+
+                    // Update Document Chart
+                    let authenticCount = 0;
+                    let suspiciousCount = 0;
+                    let incompleteCount = 0;
+
+                    data.document_analysis.pdf_analysis.forEach(pdf => {
+                        if (pdf.authenticity.assessment.includes('authentic')) {
+                            authenticCount++;
+                        } else if (pdf.authenticity.assessment.includes('fraudulent')) {
+                            suspiciousCount++;
+                        } else {
+                            incompleteCount++;
+                        }
+                    });
+
+                    updateChart(documentChart, {
+                        datasets: [{
+                            data: [
+                                authenticCount,
+                                suspiciousCount,
+                                incompleteCount
+                            ]
+                        }]
+                    });
+                } else {
+                    documentDiv.innerHTML = '<p>No documents were uploaded for analysis.</p>';
+                }
+
+                // Display Image Analysis
+                const imageAnalysisDiv = document.getElementById('imageAnalysis');
+                const imageGallery = document.getElementById('imageGallery');
+
+                imageAnalysisDiv.innerHTML = '';
+                imageGallery.innerHTML = '';
+
+                if (data.image_analysis && data.images && data.images.length > 0) {
+                    imageAnalysisDiv.innerHTML = `<p><strong>Images Analyzed:</strong> ${data.image_analysis.image_count}</p>`;
+
+                    let propertyRelatedCount = 0;
+                    data.image_analysis.image_analysis.forEach(img => {
+                        if (img && img.is_property_related) {
+                            propertyRelatedCount++;
+                        }
+                    });
+
+                    imageAnalysisDiv.innerHTML += `<p><strong>Property-Related Images:</strong> ${propertyRelatedCount} of ${data.image_analysis.image_count}</p>`;
+
+                    // Display images in gallery
+                    data.images.forEach((imgData, index) => {
+                        const imgAnalysis = data.image_analysis.image_analysis[index];
+                        const galleryItem = document.createElement('div');
+                        galleryItem.className = 'gallery-item';
+
+                        galleryItem.innerHTML = `
+                            <img src="data:image/jpeg;base64,${imgData}" alt="Property Image ${index + 1}">
+                            <div class="badge ${imgAnalysis && imgAnalysis.is_property_related ? 'badge-success' : 'badge-warning'}"
+                                 style="position: absolute; top: 5px; right: 5px;">
+                                ${imgAnalysis && imgAnalysis.is_property_related ? 'Property' : 'Not Property'}
+                            </div>
+                        `;
+
+                        imageGallery.appendChild(galleryItem);
+                    });
+                } else {
+                    imageAnalysisDiv.innerHTML = '<p>No images were uploaded for analysis.</p>';
+                }
+
+                // Update Property Summary
+                document.getElementById('summaryName').textContent = document.getElementById('propertyName').value || 'Not provided';
+                document.getElementById('summaryType').textContent = document.getElementById('propertyType').value || 'Not provided';
+                document.getElementById('summaryStatus').textContent = document.getElementById('status').value || 'Not provided';
+                document.getElementById('summaryLocation').textContent =
+                    `${document.getElementById('address').value || ''}, ${document.getElementById('city').value || ''}, ${document.getElementById('state').value || ''}, India`;
+                document.getElementById('summaryPrice').textContent = document.getElementById('marketValue').value ? `₹${document.getElementById('marketValue').value}` : 'Not provided';
+                document.getElementById('summarySize').textContent = document.getElementById('sqFt').value ? `${document.getElementById('sqFt').value} sq. ft.` : 'Not provided';
+                document.getElementById('summaryRooms').textContent =
+                    `${document.getElementById('bedrooms').value || '0'} BHK`;  // BHK is common in Indian real estate
+
+                // Update Final Verdict
+                const verdictBox = document.getElementById('verdictBox');
+                const verdictIcon = document.getElementById('verdictIcon');
+                const verdictText = document.getElementById('verdictText');
+                const verdictScoreValue = document.getElementById('verdictScoreValue');
+                const verdictScoreBar = document.getElementById('verdictScoreBar');
+                
+                // Get final verdict data
+                const finalVerdict = data.final_verdict || {};
+                const verdictStatus = finalVerdict.status || 'unknown';
+                const verdictScore = finalVerdict.score || 0;
+                const verdictConfidence = finalVerdict.confidence || 0;
+                
+                // Update verdict display
+                if (verdictStatus === 'fraudulent') {
+                    verdictBox.className = 'verdict-box verdict-fraudulent';
+                    verdictIcon.textContent = '❌';
+                    verdictText.textContent = 'HIGH RISK - LIKELY FRAUDULENT';
+                } else if (verdictStatus === 'suspicious') {
+                    verdictBox.className = 'verdict-box verdict-suspicious';
+                    verdictIcon.textContent = '⚠️';
+                    verdictText.textContent = 'CAUTION - SUSPICIOUS ELEMENTS';
+                } else if (verdictStatus === 'legitimate') {
+                    verdictBox.className = 'verdict-box verdict-legitimate';
+                    verdictIcon.textContent = '✅';
+                    verdictText.textContent = 'VERIFIED REAL ESTATE LISTING';
+                } else {
+                    verdictBox.className = 'verdict-box';
+                    verdictIcon.textContent = '❓';
+                    verdictText.textContent = 'VERDICT UNKNOWN';
+                }
+                
+                // Update verdict score
+                verdictScoreValue.textContent = `${Math.round(verdictScore)}%`;
+                verdictScoreBar.style.width = `${verdictScore}%`;
+                verdictScoreBar.className = `progress-fill ${getScoreColorClass(verdictScore)}`;
+                
+                // Display critical issues
+                const criticalIssuesList = document.getElementById('criticalIssuesList');
+                criticalIssuesList.innerHTML = '';
+                
+                if (finalVerdict.critical_issues && finalVerdict.critical_issues.length > 0) {
+                    finalVerdict.critical_issues.forEach(issue => {
+                        const li = document.createElement('li');
+                        li.className = 'suggestion-item';
+                        li.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${issue}`;
+                        criticalIssuesList.appendChild(li);
+                    });
+                    document.getElementById('criticalIssuesSection').style.display = 'block';
+                } else {
+                    document.getElementById('criticalIssuesSection').style.display = 'none';
+                }
+                
+                // Display warnings
+                const warningsList = document.getElementById('warningsList');
+                warningsList.innerHTML = '';
+                
+                if (finalVerdict.warnings && finalVerdict.warnings.length > 0) {
+                    finalVerdict.warnings.forEach(warning => {
+                        const li = document.createElement('li');
+                        li.className = 'suggestion-item';
+                        li.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${warning}`;
+                        warningsList.appendChild(li);
+                    });
+                    document.getElementById('warningsSection').style.display = 'block';
+                } else {
+                    document.getElementById('warningsSection').style.display = 'none';
+                }
+                
+                // Display recommendations
+                const recommendationsList = document.getElementById('recommendationsList');
+                recommendationsList.innerHTML = '';
+                
+                if (finalVerdict.recommendations && finalVerdict.recommendations.length > 0) {
+                    finalVerdict.recommendations.forEach(recommendation => {
+                        const li = document.createElement('li');
+                        li.className = 'suggestion-item';
+                        li.innerHTML = `<i class="fas fa-check-circle"></i> ${recommendation}`;
+                        recommendationsList.appendChild(li);
+                    });
+                    document.getElementById('recommendationsSection').style.display = 'block';
+                } else {
+                    document.getElementById('recommendationsSection').style.display = 'none';
+                }
+                
+                // Update Verification Scores
+                updateScoreBar('trustBar', 'trustValue', trustScore);
+
+                // Image authenticity score
+                let imageScore = 0;
+                if (data.image_analysis && data.image_analysis.image_analysis) {
+                    const propertyImages = data.image_analysis.image_analysis.filter(img => img && img.is_property_related);
+                    imageScore = data.image_analysis.image_count > 0 ?
+                        Math.round((propertyImages.length / data.image_analysis.image_count) * 100) : 0;
+                }
+                updateScoreBar('imageBar', 'imageValue', imageScore);
+
+                // Document verification score
+                let docScore = 0;
+                if (data.document_analysis && data.document_analysis.pdf_analysis) {
+                    const verificationScores = data.document_analysis.pdf_analysis.map(
+                        pdf => pdf.verification_score || 0
+                    );
+                    docScore = verificationScores.length > 0 ?
+                        Math.round((verificationScores.reduce((a, b) => a + b, 0) / verificationScores.length) * 100) : 0;
+                }
+                updateScoreBar('documentBar', 'documentValue', docScore);
+
+                // Content quality score
+                const contentScore = validatedData.qualityAssessment ? validatedData.qualityAssessment.score : 0;
+                updateScoreBar('contentBar', 'contentValue', contentScore);
+
+                // Location accuracy score
+                const locationScore = data.location_analysis ? data.location_analysis.completeness_score || 0 : 0;
+                updateScoreBar('locationBar', 'locationValue', locationScore);
+
+                // Update Red Flags
+                const redFlagsList = document.getElementById('redFlagsList');
+                redFlagsList.innerHTML = '';
+
+                const redFlags = [];
+
+                // Check for inconsistencies and issues
+                if (data.cross_validation) {
+                    data.cross_validation.forEach(check => {
+                        if (check.status === 'inconsistent' || check.status === 'invalid' ||
+                            check.status === 'suspicious' || check.status === 'no_match') {
+                            redFlags.push(`${check.check}: ${check.message}`);
+                        }
+                    });
+                }
+
+                if (validatedData.qualityAssessment && validatedData.qualityAssessment.isAiGenerated) {
+                    redFlags.push('Description appears to be AI-generated, which may indicate a fake listing');
+                }
+
+                if (data.price_analysis &&
+                    (data.price_analysis.assessment === 'suspicious pricing' ||
+                     data.price_analysis.assessment === 'overpriced' ||
+                     data.price_analysis.assessment === 'underpriced')) {
+                    redFlags.push(`Price is ${data.price_analysis.assessment} for this type of property`);
+                }
+
+                if (data.legal_analysis && data.legal_analysis.potential_issues) {
+                    redFlags.push('Potential legal issues detected in the property documentation');
+                }
+
+                if (data.image_analysis && data.image_analysis.image_count > 0) {
+                    const propertyImages = data.image_analysis.image_analysis.filter(img => img && img.is_property_related);
+                    if (propertyImages.length === 0) {
+                        redFlags.push('None of the uploaded images appear to be related to real estate');
+                    }
+                }
+
+                // If no red flags, add a positive message
+                if (redFlags.length === 0) {
+                    redFlags.push('No significant red flags detected in this listing');
+                }
+
+                redFlags.forEach(flag => {
+                    const li = document.createElement('li');
+                    li.className = 'suggestion-item';
+                    li.textContent = flag;
+                    redFlagsList.appendChild(li);
+                });
+                
+            } catch (error) {
+                console.error('Error displaying results:', error);
+                document.getElementById('resultsContainer').innerHTML = 
+                    '<div class="alert alert-danger">Error displaying results. Please try again.</div>';
+            }
+        }
+        
+        function updateScoreBar(barId, valueId, score) {
+            const bar = document.getElementById(barId);
+            const value = document.getElementById(valueId);
+            
+            if (bar && value) {
+                bar.style.setProperty('--score-width', `${score}%`);
+                bar.style.background = `linear-gradient(to right, 
+                    ${getScoreColor(score)} ${score}%, 
+                    #e9ecef ${score}%)`;
+                value.textContent = `${score}%`;
+            }
+        }
+        
+        function getScoreColor(score) {
+            if (score >= 70) return 'var(--success)';
+            if (score >= 40) return 'var(--warning)';
+            return 'var(--danger)';
+        }
+    </script>
+</body>
+</html>
